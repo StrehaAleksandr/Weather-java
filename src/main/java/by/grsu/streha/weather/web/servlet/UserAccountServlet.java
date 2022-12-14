@@ -14,14 +14,14 @@ import javax.servlet.http.HttpServletResponse;
 import com.google.common.base.Strings;
 
 import by.grsu.streha.weather.db.dao.IDao;
-import by.grsu.streha.weather.db.dao.impl.CountryDaoImpl;
-import by.grsu.streha.weather.db.model.Country;
-import by.grsu.streha.weather.web.dto.CountryDto;
+import by.grsu.streha.weather.db.dao.impl.UserAccountDaoImpl;
+import by.grsu.streha.weather.db.model.UserAccount;
+import by.grsu.streha.weather.web.dto.UserAccountDto;
 import by.grsu.streha.weather.web.dto.SortDto;
 import by.grsu.streha.weather.web.dto.TableStateDto;
 
-public class CountryServlet extends AbstractListServlet {
-	private static final IDao<Integer, Country> countryDao = CountryDaoImpl.INSTANCE;
+public class UserAccountServlet extends AbstractListServlet {
+	private static final IDao<Integer, UserAccount> userAccountDao = UserAccountDaoImpl.INSTANCE;
 
 	@Override
 	public void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
@@ -35,55 +35,57 @@ public class CountryServlet extends AbstractListServlet {
 	}
 	
 	private void handleListView(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
-		int totalCalendar = countryDao.count(); // get count of ALL items
+		int totalCalendar = userAccountDao.count(); // get count of ALL items
 
 		final TableStateDto tableStateDto = resolveTableStateDto(req, totalCalendar);
 		
-		List<Country> countryes = countryDao.find(tableStateDto); // get data
+		List<UserAccount> accounts = userAccountDao.find(tableStateDto); // get data
 
-		List<CountryDto> dtos = countryes.stream().map((entity) -> {
-			CountryDto dto = new CountryDto();
+		List<UserAccountDto> dtos = accounts.stream().map((entity) -> {
+			UserAccountDto dto = new UserAccountDto();
 			dto.setId(entity.getId());
-			dto.setName(entity.getName());
-			
+			dto.setLogin(entity.getLogin());
+			dto.setPassword(entity.getPassword());
 			return dto;
 		}).collect(Collectors.toList());
 
 		req.setAttribute("list", dtos);
-		req.getRequestDispatcher("country-list.jsp").forward(req, res);
+		req.getRequestDispatcher("userAccount-list.jsp").forward(req, res);
 	}
 	
 	private void handleEditView(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
-		String countryIdStr = req.getParameter("id");
-		CountryDto dto = new CountryDto();
-		if (!Strings.isNullOrEmpty(countryIdStr)) {
-			Integer countryId = Integer.parseInt(countryIdStr);
-			Country entity = countryDao.getById(countryId);
+		String userAccountIdStr = req.getParameter("id");
+		UserAccountDto dto = new UserAccountDto();
+		if (!Strings.isNullOrEmpty(userAccountIdStr)) {
+			Integer userAccountId = Integer.parseInt(userAccountIdStr);
+			UserAccount entity = userAccountDao.getById(userAccountId);
 			dto.setId(entity.getId());
-			dto.setName(entity.getName());
+			dto.setLogin(entity.getLogin());
+			dto.setPassword(entity.getPassword());
 		}
 		req.setAttribute("dto", dto);
-		req.getRequestDispatcher("country-edit.jsp").forward(req, res);
+		req.getRequestDispatcher("userAccount-edit.jsp").forward(req, res);
 	}
 		
 	@Override
 	public void doPost(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
 		System.out.println("doPost");
-		Country country = new Country();
-		String countryIdStr = req.getParameter("id");
-		country.setName(req.getParameter("name"));
-		if (Strings.isNullOrEmpty(countryIdStr)) {
-			countryDao.insert(country);
+		UserAccount userAccount = new UserAccount();
+		String userAccountIdStr = req.getParameter("id");
+		userAccount.setLogin(req.getParameter("login"));
+		userAccount.setPassword(req.getParameter("password"));
+		if (Strings.isNullOrEmpty(userAccountIdStr)) {
+			userAccountDao.insert(userAccount);
 		} else {
-			country.setId(Integer.parseInt(countryIdStr));
-			countryDao.update(country);
+			userAccount.setId(Integer.parseInt(userAccountIdStr));
+			userAccountDao.update(userAccount);
 		}
-		res.sendRedirect("/country");
+		res.sendRedirect("/userAccount");
 	}
 
 	@Override
 	public void doDelete(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
 		System.out.println("doDelete");
-		countryDao.delete(Integer.parseInt(req.getParameter("id")));
+		userAccountDao.delete(Integer.parseInt(req.getParameter("id")));
 	}
 }

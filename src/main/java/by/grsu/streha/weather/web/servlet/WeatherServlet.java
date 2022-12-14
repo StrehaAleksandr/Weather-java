@@ -5,6 +5,11 @@ import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
+import java.text.ParseException;
+import java.time.LocalDateTime;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -22,6 +27,7 @@ import by.grsu.streha.weather.db.model.Country;
 import by.grsu.streha.weather.db.model.City;
 import by.grsu.streha.weather.db.model.UserAccount;
 import by.grsu.streha.weather.web.dto.WeatherDto;
+import by.grsu.streha.weather.web.dto.UserAccountDto;
 import by.grsu.streha.weather.web.dto.CountryDto;
 import by.grsu.streha.weather.web.dto.CityDto;
 import by.grsu.streha.weather.web.dto.TableStateDto;
@@ -31,6 +37,9 @@ public class WeatherServlet extends AbstractListServlet {
 	private static final IDao<Integer, Country> countryDao = CountryDaoImpl.INSTANCE;
 	private static final IDao<Integer, City> cityDao = CityDaoImpl.INSTANCE;
 	private static final IDao<Integer, UserAccount> userAccountDao = UserAccountDaoImpl.INSTANCE;
+	
+	private DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
+	private DateTimeFormatter TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
 
 	@Override
 	public void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
@@ -66,6 +75,9 @@ public class WeatherServlet extends AbstractListServlet {
 			City city = cityDao.getById(entity.getCityId());
 			dto.setCityName(city.getName());
 						
+			Country country = countryDao.getById(city.getCountryId());
+			dto.setCountryName(country.getName());
+			
 			UserAccount user = userAccountDao.getById(entity.getCreatorId());
 			dto.setCreatorLogin(user.getLogin());
 			return dto;
@@ -91,8 +103,19 @@ public class WeatherServlet extends AbstractListServlet {
 		}
 		req.setAttribute("dto", dto);
 		req.setAttribute("allCountryes", getAllCountryesDtos());
+		req.setAttribute("allAccounts", getAllAccountsDtos());
 		req.setAttribute("allCityes", getAllCityesDtos());
 		req.getRequestDispatcher("edit.jsp").forward(req, res);
+	}
+	
+	private List<UserAccountDto> getAllAccountsDtos() {
+		return userAccountDao.getAll().stream().map((entity) -> {
+			UserAccountDto dto = new UserAccountDto();
+			dto.setId(entity.getId());
+			dto.setLogin(entity.getLogin());
+			dto.setPassword(entity.getPassword());
+			return dto;
+		}).collect(Collectors.toList());
 	}
 	
 	private List<CountryDto> getAllCountryesDtos() {
@@ -121,10 +144,14 @@ public class WeatherServlet extends AbstractListServlet {
 		String cityIdStr = req.getParameter("cityId");
 		String creatorIdStr = req.getParameter("creatorId");
 		String tempreture = req.getParameter("tempreture");
+		String dateStr = req.getParameter("date");
 
 		weather.setCityId(cityIdStr == null ? null : Integer.parseInt(cityIdStr));
 		weather.setTempreture(tempreture == null ? null : Integer.parseInt(tempreture));
 		weather.setWeather(req.getParameter("weather"));
+		
+		//weather.setDate(Timestamp.valueOf(dateStr));
+		//weather.setDate(Timestamp.valueOf(LocalDateTime.parse(req.getParameter("date"), TIMESTAMP_FORMAT)));
 		weather.setCreatorId(creatorIdStr == null ? null : Integer.parseInt(creatorIdStr));
 		if (Strings.isNullOrEmpty(weatherIdStr)) {
 			// new entity

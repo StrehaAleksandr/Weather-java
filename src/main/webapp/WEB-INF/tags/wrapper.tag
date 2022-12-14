@@ -18,11 +18,17 @@
 	<nav class="main-header__navigation main-navigation">
 	    <a class="main-navigation__logo" href="index.jsp">Weather Calendar</a>
 	    <ul class="main-navigation__list">
+	    	<li class="main-navigation__item">
+	            <a href="/city">city List</a>
+	        </li>
+	        <li class="main-navigation__item">
+	            <a href="/country">country List</a>
+	        </li>
 	        <li class="main-navigation__item">
 	            <a href="/weather">List</a>
 	        </li>
 	        <li class="main-navigation__item">
-	            <a href="/weather?view=edit">Edit</a>
+	            <a href="/userAccount">user list</a>
 	        </li>
 	        <li class="active main-navigation__item"><a onclick="sendHTTPDelete('/login')">Logout</a></li>
 	    </ul>

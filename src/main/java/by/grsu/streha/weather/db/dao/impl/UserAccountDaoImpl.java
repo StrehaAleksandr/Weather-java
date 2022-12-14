@@ -9,7 +9,9 @@ import java.util.List;
 
 import by.grsu.streha.weather.db.dao.AbstractDao;
 import by.grsu.streha.weather.db.dao.IDao;
+import by.grsu.streha.weather.db.model.City;
 import by.grsu.streha.weather.db.model.UserAccount;
+import by.grsu.streha.weather.web.dto.SortDto;
 import by.grsu.streha.weather.web.dto.TableStateDto;
 
 public class UserAccountDaoImpl extends AbstractDao implements IDao<Integer, UserAccount> {
@@ -102,11 +104,39 @@ public class UserAccountDaoImpl extends AbstractDao implements IDao<Integer, Use
 
 	@Override
 	public List<UserAccount> find(TableStateDto tableStateDto) {
-		throw new RuntimeException("not implemented");
+		List<UserAccount> entitiesList = new ArrayList<>();
+		try (Connection c = createConnection()) {
+			StringBuilder sql = new StringBuilder("select * from user_account");
+
+			final SortDto sortDto = tableStateDto.getSort();
+			if (sortDto != null) {
+				sql.append(String.format(" order by %s %s", sortDto.getColumn(), resolveSortOrder(sortDto)));
+			}
+
+			sql.append(" limit " + tableStateDto.getItemsPerPage());
+			sql.append(" offset " + resolveOffset(tableStateDto));
+
+			System.out.println("searching UserAccount using SQL: " + sql);
+			ResultSet rs = c.createStatement().executeQuery(sql.toString());
+			while (rs.next()) {
+				UserAccount entity = rowToEntity(rs);
+				entitiesList.add(entity);
+			}
+		} catch (SQLException e) {
+			throw new RuntimeException("can't select UserAccount entities", e);
+		}
+		return entitiesList;
 	}
 
 	@Override
 	public int count() {
-		throw new RuntimeException("not implemented");
+		try (Connection c = createConnection()) {
+			PreparedStatement pstmt = c.prepareStatement("select count(*) as c from user_account");
+			ResultSet rs = pstmt.executeQuery();
+			rs.next();
+			return rs.getInt("c");
+		} catch (SQLException e) {
+			throw new RuntimeException("can't get user_account count", e);
+		}
 	}
 }

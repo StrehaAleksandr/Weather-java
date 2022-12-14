@@ -19,8 +19,11 @@ import by.grsu.streha.weather.db.dao.impl.CityDaoImpl;
 import by.grsu.streha.weather.db.model.Country;
 import by.grsu.streha.weather.db.model.City;
 import by.grsu.streha.weather.web.dto.CityDto;
+import by.grsu.streha.weather.web.dto.CountryDto;
+import by.grsu.streha.weather.web.dto.SortDto;
+import by.grsu.streha.weather.web.dto.TableStateDto;
 
-public class CityServlet extends HttpServlet {
+public class CityServlet extends AbstractListServlet {
 	private static final IDao<Integer, City> cityDao = CityDaoImpl.INSTANCE;
 	private static final IDao<Integer, Country> countryDao = CountryDaoImpl.INSTANCE;
 
@@ -36,7 +39,11 @@ public class CityServlet extends HttpServlet {
 	}
 	
 	private void handleListView(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
-		List<City> cityes = cityDao.getAll(); // get data
+		int totalCalendar = cityDao.count(); // get count of ALL items
+
+		final TableStateDto tableStateDto = resolveTableStateDto(req, totalCalendar);
+		
+		List<City> cityes = cityDao.find(tableStateDto); // get data
 
 		List<CityDto> dtos = cityes.stream().map((entity) -> {
 			CityDto dto = new CityDto();
@@ -49,7 +56,7 @@ public class CityServlet extends HttpServlet {
 		}).collect(Collectors.toList());
 
 		req.setAttribute("list", dtos);
-		req.getRequestDispatcher("list-1.jsp").forward(req, res);
+		req.getRequestDispatcher("city-list.jsp").forward(req, res);
 	}
 	
 	private void handleEditView(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
@@ -63,7 +70,17 @@ public class CityServlet extends HttpServlet {
 			dto.setCountryId(entity.getCountryId());
 		}
 		req.setAttribute("dto", dto);
-		req.getRequestDispatcher("edit-1.jsp").forward(req, res);
+		req.setAttribute("allCountryes", getAllCountryesDtos());
+		req.getRequestDispatcher("city-edit.jsp").forward(req, res);
+	}
+	
+	private List<CountryDto> getAllCountryesDtos() {
+		return countryDao.getAll().stream().map((entity) -> {
+			CountryDto dto = new CountryDto();
+			dto.setId(entity.getId());
+			dto.setName(entity.getName());
+			return dto;
+		}).collect(Collectors.toList());
 	}
 
 	
